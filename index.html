@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>48 Laws | Master the Game</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #050508; color: #fff; font-family: 'Inter', sans-serif; min-height: 100vh; }
+    .gold-text { background: linear-gradient(135deg, #D4AF37, #E8C547, #B8941F); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .gold-border { border: 1px solid rgba(212, 175, 55, 0.25); }
+    .gold-border:hover { border-color: rgba(212, 175, 55, 0.5); }
+    .card { background: linear-gradient(145deg, rgba(17,17,24,0.9), rgba(10,10,15,0.95)); backdrop-filter: blur(20px); border-radius: 12px; }
+    .btn-primary { background: linear-gradient(135deg, #D4AF37, #B8941F); color: #050508; font-weight: 600; padding: 12px 24px; border-radius: 8px; transition: all 0.3s; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(212,175,55,0.3); }
+    .btn-secondary { border: 1px solid rgba(212,175,55,0.4); color: #D4AF37; padding: 12px 24px; border-radius: 8px; transition: all 0.3s; }
+    .btn-secondary:hover { background: rgba(212,175,55,0.1); }
+    .btn-danger { border: 1px solid rgba(239,68,68,0.4); color: #ef4444; padding: 12px 24px; border-radius: 8px; }
+    .progress-bar { height: 4px; background: rgba(212,175,55,0.15); border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #D4AF37, #E8C547); }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(5,5,8,0.98); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+    .modal.active { display: flex; }
+    .seal { width: 48px; height: 48px; border: 2px solid #D4AF37; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    input { background: #0A0A0F; border: 1px solid rgba(212,175,55,0.3); padding: 12px 16px; border-radius: 8px; color: white; width: 100%; }
+    input:focus { outline: none; border-color: #D4AF37; }
+    .nav-link:hover { color: #D4AF37; }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-50 px-6 py-4 bg-black/80 backdrop-blur-xl border-b border-yellow-500/20">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <button onclick="showView('landing')" class="flex items-center gap-3">
+        <div class="seal"><i data-lucide="crown" class="w-5 h-5 text-yellow-500"></i></div>
+        <span class="font-bold tracking-widest gold-text">48 LAWS</span>
+      </button>
+      
+      <div id="nav-links" class="hidden md:flex items-center gap-6">
+        <button onclick="showView('laws')" class="text-sm text-gray-400 hover:text-white transition">The Laws</button>
+        <button onclick="showView('progress')" class="text-sm text-gray-400 hover:text-white transition">Progress</button>
+        <button onclick="showView('subscribe')" class="text-sm text-yellow-500 transition">Upgrade</button>
+      </div>
+      
+      <div id="admin-nav" class="hidden items-center gap-6">
+        <button onclick="showView('admin')" class="text-sm text-red-400 transition">Admin</button>
+      </div>
+      
+      <div class="flex items-center gap-4">
+        <div id="user-badge" class="hidden items-center gap-3">
+          <div class="text-right">
+            <p class="text-xs text-gray-500">Level <span id="nav-level">1</span></p>
+            <p id="nav-tier" class="text-xs text-yellow-500">Guest</p>
+          </div>
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-500 to-yellow-700 flex items-center justify-center cursor-pointer" onclick="showView('profile')">
+            <span id="nav-avatar" class="font-bold text-black">G</span>
+          </div>
+        </div>
+        <button id="login-btn" onclick="openLoginModal()" class="text-sm text-gray-400 hover:text-white">Login</button>
+        <button id="logout-btn" onclick="logout()" class="hidden text-sm text-red-400">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main id="main-content" class="pt-20 min-h-screen"></main>
+
+  <!-- Login Modal -->
+  <div id="loginModal" class="modal">
+    <div class="card p-8 max-w-md w-full relative">
+      <button onclick="closeModal('loginModal')" class="absolute top-4 right-4 text-gray-500 hover:text-white">✕</button>
+      <div class="text-center mb-8">
+        <div class="seal mx-auto mb-4"><i data-lucide="crown" class="w-6 h-6 text-yellow-500"></i></div>
+        <h3 class="text-2xl font-bold mb-2">Welcome Back</h3>
+        <p class="text-gray-500 text-sm">Enter your credentials</p>
+      </div>
+      <form onsubmit="handleLogin(event)">
+        <div class="space-y-4">
+          <input type="email" id="login-email" placeholder="Email" required>
+          <input type="password" id="login-password" placeholder="Password" required>
+          <button type="submit" class="btn-primary w-full">Sign In</button>
+        </div>
+      </form>
+      <p class="text-center text-sm text-gray-500 mt-4">No account? <button onclick="showRegister()" class="text-yellow-500">Create one</button></p>
+    </div>
+  </div>
+
+  <!-- Register Modal -->
+  <div id="registerModal" class="modal">
+    <div class="card p-8 max-w-md w-full relative">
+      <button onclick="closeModal('registerModal')" class="absolute top-4 right-4 text-gray-500 hover:text-white">✕</button>
+      <div class="text-center mb-8">
+        <div class="seal mx-auto mb-4"><i data-lucide="user-plus" class="w-6 h-6 text-yellow-500"></i></div>
+        <h3 class="text-2xl font-bold mb-2">Begin Your Journey</h3>
+        <p class="text-gray-500 text-sm">Create your account</p>
+      </div>
+      <form onsubmit="handleRegister(event)">
+        <div class="space-y-4">
+          <input type="text" id="reg-name" placeholder="Full Name" required>
+          <input type="email" id="reg-email" placeholder="Email" required>
+          <input type="password" id="reg-password" placeholder="Password" required>
+          <button type="submit" class="btn-primary w-full">Create Account</button>
+        </div>
+      </form>
+      <p class="text-center text-sm text-gray-500 mt-4">Have an account? <button onclick="showLogin()" class="text-yellow-500">Sign in</button></p>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div id="paymentModal" class="modal">
+    <div class="card p-6 max-w-md w-full relative">
+      <button onclick="closeModal('paymentModal')" class="absolute top-4 right-4 text-gray-500 hover:text-white">✕</button>
+      <div id="payment-content"></div>
+    </div>
+  </div>
+
+  <script>
+    // CONFIG
+    const BTC_ADDRESS = '3CVwLHiWwGYjKeWnc8i7HFrnKfqXoStZSH';
+    const ADMIN_EMAIL = 'admin@48laws.com';
+    const ADMIN_PASSWORD = 'Sovereign2024!';
+    
+    const TIERS = {
+      guest: { name: 'Guest', price: 0, laws: 3 },
+      initiate: { name: 'Initiate', price: 29, laws: 12 },
+      adept: { name: 'Adept', price: 79, laws: 48 },
+      sovereign: { name: 'Sovereign', price: 199, laws: 48 }
+    };
+
+    const LAWS = [
+      { id: 1, title: "Cultivate an Air of Unpredictability", subtitle: "Keep them guessing", story: "I learned this watching a mentor who never revealed their next move.", principle: "When you break patterns, you create power.", applications: ["Vary your routines", "Keep intentions hidden"], exercise: "Break one expected pattern this week.", pitfalls: ["Being erratic"], advanced: "Create false patterns, then break them." },
+      { id: 2, title: "Never Outshine the Master", subtitle: "Make them feel superior", story: "I showed up my superior and earned resentment.", principle: "Those above need to feel secure.", applications: ["Give credit upward"], exercise: "Make someone above you look good.", pitfalls: ["Being too obvious"], advanced: "Learn what they fear and eliminate it." },
+      { id: 3, title: "Conceal Your Intentions", subtitle: "Keep plans hidden", story: "I shared ambitions and they were blocked.", principle: "Knowledge is leverage.", applications: ["Share goals selectively"], exercise: "Speak more vaguely about one goal.", pitfalls: ["Becoming paranoid"], advanced: "Reveal false intentions to confuse." },
+      { id: 4, title: "Always Say Less Than Necessary", subtitle: "Words are weapons", story: "Every word revealed information.", principle: "Silence creates mystery.", applications: ["Answer minimally"], exercise: "Say 50% less in conversations.", pitfalls: ["Being uncommunicative"], advanced: "Master the pregnant pause." },
+      { id: 5, title: "Guard Your Reputation", subtitle: "It's your foundation", story: "One mistake nearly destroyed years of work.", principle: "Reputation opens doors.", applications: ["Be selective with associations"], exercise: "Identify reputation threats.", pitfalls: ["Being obsessed"], advanced: "Build multiple reputations." },
+      { id: 6, title: "Create Value Through Scarcity", subtitle: "Less is more", story: "When available to all, I was taken for granted.", principle: "Scarcity creates desire.", applications: ["Limit availability"], exercise: "Create scarcity for one week.", pitfalls: ["Being inaccessible"], advanced: "Create tiers of access." },
+      { id: 7, title: "Get Others to Do the Work", subtitle: "Take the credit", story: "A master orchestrated while others executed.", principle: "Orchestrating multiplies impact.", applications: ["Delegate effectively"], exercise: "Delegate one task this week.", pitfalls: ["Being exploitative"], advanced: "Make others want to contribute." },
+      { id: 8, title: "Make Others Come to You", subtitle: "Use bait", story: "Chasing positioned me as needy.", principle: "Initiator is weaker.", applications: ["Build expertise that attracts"], exercise: "Create something people want.", pitfalls: ["Being inaccessible"], advanced: "Create competition for your attention." },
+      { id: 9, title: "Win Through Actions", subtitle: "Never argue", story: "Arguments created resistance.", principle: "Demonstration convinces.", applications: ["Let results speak"], exercise: "Demonstrate instead of arguing.", pitfalls: ["Never explaining"], advanced: "Set up situations where outcomes happen." },
+      { id: 10, title: "Avoid the Unhappy", subtitle: "Misery is contagious", story: "A friend's unlucky energy drained me.", principle: "Energy transfers.", applications: ["Create boundaries"], exercise: "Distance from negative energy.", pitfalls: ["Being cruel"], advanced: "Learn misfortune patterns." },
+      { id: 11, title: "Keep Others Dependent", subtitle: "Maintain indispensability", story: "Unique knowledge made me irreplaceable.", principle: "Dependency equals control.", applications: ["Develop unique expertise"], exercise: "Deepen irreplaceable knowledge.", pitfalls: ["Being obstructive"], advanced: "Create mutual dependency." },
+      { id: 12, title: "Use Selective Honesty", subtitle: "Disarm with truth", story: "One honest gesture disarmed years of suspicion.", principle: "Strategic honesty builds trust.", applications: ["Make genuine gestures"], exercise: "Disarm someone who distrusts you.", pitfalls: ["Being predictable"], advanced: "Build honesty reputation." }
+    ];
+
+    // STATE
+    let appState = JSON.parse(localStorage.getItem('laws48_state')) || { currentUser: null, users: [], payments: [], metrics: { pageViews: 0, signups: 0, payments: 0, revenue: 0 } };
+    let currentUser = appState.currentUser;
+
+    function saveState() {
+      appState.currentUser = currentUser;
+      localStorage.setItem('laws48_state', JSON.stringify(appState));
+      updateNav();
+    }
+
+    function updateNav() {
+      const navLinks = document.getElementById('nav-links');
+      const adminNav = document.getElementById('admin-nav');
+      const userBadge = document.getElementById('user-badge');
+      const loginBtn = document.getElementById('login-btn');
+      const logoutBtn = document.getElementById('logout-btn');
+      
+      if (currentUser) {
+        loginBtn.classList.add('hidden');
+        logoutBtn.classList.remove('hidden');
+        userBadge.classList.remove('hidden');
+        userBadge.classList.add('flex');
+        
+        if (currentUser.isAdmin) {
+          navLinks.classList.add('hidden');
+          adminNav.classList.remove('hidden');
+          adminNav.classList.add('flex');
+          document.getElementById('nav-tier').textContent = 'ADMIN';
+          document.getElementById('nav-tier').className = 'text-xs text-red-500';
+        } else {
+          navLinks.classList.remove('hidden');
+          adminNav.classList.add('hidden');
+          adminNav.classList.remove('flex');
+          document.getElementById('nav-tier').textContent = currentUser.tier ? TIERS[currentUser.tier].name : 'Guest';
+          document.getElementById('nav-tier').className = 'text-xs text-yellow-500';
+        }
+        
+        document.getElementById('nav-level').textContent = currentUser.level || 1;
+        document.getElementById('nav-avatar').textContent = currentUser.name ? currentUser.name[0].toUpperCase() : 'G';
+      } else {
+        loginBtn.classList.remove('hidden');
+        logoutBtn.classList.add('hidden');
+        userBadge.classList.add('hidden');
+        userBadge.classList.remove('flex');
+        navLinks.classList.add('hidden');
+        adminNav.classList.add('hidden');
+        adminNav.classList.remove('flex');
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function showView(view) {
+      appState.metrics.pageViews++;
+      saveState();
+      const main = document.getElementById('main-content');
+      main.innerHTML = '';
+      
+      if (view === 'landing') renderLanding();
+      else if (view === 'laws') renderLaws();
+      else if (view === 'progress') renderProgress();
+      else if (view === 'profile') renderProfile();
+      else if (view === 'subscribe') renderSubscribe();
+      else if (view === 'admin') renderAdmin();
+      else if (view === 'locked') renderLocked();
+      
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function renderLanding() {
+      const main = document.getElementById('main-content');
+      const btn1 = currentUser ? '<button onclick="showView(\'laws\')" class="btn-primary">Continue Learning</button>' : '<button onclick="openLoginModal()" class="btn-primary">Begin Your Journey</button>';
+      
+      main.innerHTML = '<div class="min-h-screen flex flex-col items-center justify-center px-6 py-20 text-center">' +
+        '<div class="seal mb-6"><i data-lucide="crown" class="w-8 h-8 text-yellow-500"></i></div>' +
+        '<h1 class="text-5xl md:text-6xl font-bold mb-4 gold-text">48 Laws</h1>' +
+        '<p class="text-gray-400 text-lg mb-2">Master the Game</p>' +
+        '<p class="text-gray-500 max-w-md mb-8">Ancient wisdom for modern power. A transformative journey.</p>' +
+        '<div class="flex gap-4 mb-12">' + btn1 + '<button onclick="showView(\'laws\')" class="btn-secondary">Preview Laws</button></div>' +
+        '<div class="grid grid-cols-3 gap-4 max-w-2xl w-full mb-12">' +
+        '<div class="card p-6 text-center"><p class="text-2xl font-bold gold-text">$29</p><p class="text-sm text-gray-500">Initiate</p><p class="text-xs text-gray-600">12 Laws</p></div>' +
+        '<div class="card p-6 text-center border-yellow-500/50"><p class="text-2xl font-bold gold-text">$79</p><p class="text-sm text-gray-500">Adept</p><p class="text-xs text-gray-600">48 Laws</p></div>' +
+        '<div class="card p-6 text-center"><p class="text-2xl font-bold gold-text">$199</p><p class="text-sm text-gray-500">Sovereign</p><p class="text-xs text-gray-600">+ Coaching</p></div></div>' +
+        '<p class="text-gray-600 text-xs uppercase tracking-widest mb-2">Private Membership</p>' +
+        '<p class="text-gray-500 text-sm">Bitcoin • Ethereum • Cash App • Venmo</p></div>';
+    }
+
+    function renderLaws() {
+      const main = document.getElementById('main-content');
+      const tier = currentUser && currentUser.tier ? currentUser.tier : 'guest';
+      const maxLaws = TIERS[tier].laws;
+      const completed = currentUser && currentUser.completed ? currentUser.completed : [];
+      
+      let lawsHtml = '';
+      for (let i = 0; i < Math.min(LAWS.length, maxLaws); i++) {
+        const law = LAWS[i];
+        const done = completed.includes(law.id);
+        lawsHtml += '<div onclick="showLaw(' + law.id + ')" class="card p-5 cursor-pointer hover:border-yellow-500/50 transition ' + (done ? 'border-yellow-500' : '') + '">' +
+          '<div class="flex justify-between items-start mb-2"><span class="text-yellow-500 font-bold">' + String(law.id).padStart(2, '0') + '</span>' + (done ? '✓' : '') + '</span></div>' +
+          '<h3 class="font-semibold mb-1">' + law.title + '</h3><p class="text-gray-500 text-sm">' + law.subtitle + '</p></div>';
+      }
+      
+      for (let i = maxLaws; i < Math.min(LAWS.length, maxLaws + 2); i++) {
+        const law = LAWS[i];
+        lawsHtml += '<div onclick="' + (currentUser ? 'showView(\'locked\')' : 'openLoginModal()') + '" class="card p-5 cursor-pointer opacity-50">' +
+          '<div class="flex justify-between items-start mb-2"><span class="text-gray-600 font-bold">' + String(law.id).padStart(2, '0') + '</span><span>🔒</span></div>' +
+          '<h3 class="font-semibold mb-1 text-gray-500">' + law.title + '</h3><p class="text-gray-600 text-sm">' + law.subtitle + '</p></div>';
+      }
+      
+      main.innerHTML = '<div class="min-h-screen px-6 py-12"><div class="max-w-6xl mx-auto">' +
+        '<div class="flex items-center gap-4 mb-6"><button onclick="showView(\'landing\')" class="text-gray-400 hover:text-white">←</button><h2 class="text-2xl font-bold gold-text">The 48 Laws</h2></div>' +
+        '<div class="progress-bar mb-8"><div class="progress-fill" style="width:' + ((completed.length / maxLaws) * 100) + '%"></div></div>' +
+        '<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">' + lawsHtml + '</div>' +
+        (tier === 'guest' ? '<div class="mt-8 text-center"><p class="text-gray-500 mb-4">Sign up to track progress</p><button onclick="openLoginModal()" class="btn-primary">Get Started</button></div>' : '') +
+        '</div></div>';
+    }
+
+    function showLaw(id) {
+      const law = LAWS.find(l => l.id === id);
+      if (!law) return;
+      const main = document.getElementById('main-content');
+      const completed = currentUser && currentUser.completed ? currentUser.completed : [];
+      const done = completed.includes(law.id);
+      
+      const apps = law.applications.map(a => '<li class="flex gap-2 text-gray-300"><span class="text-yellow-500">→</span>' + a + '</li>').join('');
+      const pitfalls = law.pitfalls.map(p => '<li class="flex gap-2 text-gray-300"><span class="text-red-400">✕</span>' + p + '</li>').join('');
+      
+      const btn = currentUser ? '<button onclick="markComplete(' + law.id + ')" class="' + (done ? 'btn-secondary' : 'btn-primary') + ' w-full">' + (done ? '✓ Completed' : 'Mark Complete') + '</button>' : '<button onclick="openLoginModal()" class="btn-primary w-full">Sign in to Track</button>';
+      
+      main.innerHTML = '<div class="min-h-screen px-6 py-12"><div class="max-w-2xl mx-auto">' +
+        '<button onclick="showView(\'laws\')" class="text-gray-400 hover:text-white mb-6">← Back</button>' +
+        '<div class="text-center mb-8"><span class="text-4xl font-bold gold-text">' + String(law.id).padStart(2, '0') + '</span><h1 class="text-3xl font-bold mt-2">' + law.title + '</h1><p class="text-gray-400">' + law.subtitle + '</p></div>' +
+        '<div class="space-y-6">' +
+        '<div class="card p-6"><h3 class="font-bold mb-3 flex items-center gap-2"><i data-lucide="book-open" class="w-5 h-5 text-yellow-500"></i>The Story</h3><p class="text-gray-300">' + law.story + '</p></div>' +
+        '<div class="card p-6"><h3 class="font-bold mb-3 flex items-center gap-2"><i data-lucide="lightbulb" class="w-5 h-5 text-yellow-500"></i>The Principle</h3><p class="text-gray-300">' + law.principle + '</p></div>' +
+        '<div class="card p-6"><h3 class="font-bold mb-3 flex items-center gap-2"><i data-lucide="target" class="w-5 h-5 text-yellow-500"></i>Applications</h3><ul class="space-y-2">' + apps + '</ul></div>' +
+        '<div class="card p-6"><h3 class="font-bold mb-3 flex items-center gap-2"><i data-lucide="activity" class="w-5 h-5 text-yellow-500"></i>Exercise</h3><p class="text-gray-300">' + law.exercise + '</p></div>' +
+        '<div class="card p-6 border-red-500/30"><h3 class="font-bold mb-3 text-red-400 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-5 h-5"></i>Pitfalls</h3><ul class="space-y-2">' + pitfalls + '</ul></div>' +
+        '<div class="card p-6 border-yellow-500/50"><h3 class="font-bold mb-3 flex items-center gap-2"><i data-lucide="zap" class="w-5 h-5 text-yellow-500"></i>Advanced</h3><p class="text-gray-300">' + law.advanced + '</p></div>' +
+        '</div>' + btn + '</div></div>';
+    }
+
+    function markComplete(lawId) {
+      if (!currentUser) return;
+      if (!currentUser.completed) currentUser.completed = [];
+      if (!currentUser.completed.includes(lawId)) {
+        currentUser.completed.push(lawId);
+        currentUser.xp = (currentUser.xp || 0) + 25;
+        const newLevel = Math.floor(currentUser.xp / 100) + 1;
+        if (newLevel > (currentUser.level || 1)) currentUser.level = newLevel;
+        saveState();
+        showLaw(lawId);
+      }
+    }
+
+    function renderProgress() {
+      if (!currentUser) { openLoginModal(); return; }
+      const main = document.getElementById('main-content');
+      const completed = currentUser.completed || [];
+      const maxLaws = TIERS[currentUser.tier || 'guest'].laws;
+      
+      let achievements = '';
+      if (completed.length > 0) {
+        for (let i = completed.length - 1; i >= Math.max(0, completed.length - 5); i--) {
+          const law = LAWS.find(l => l.id === completed[i]);
+          if (law) achievements += '<div class="flex items-center gap-2 text-sm"><span class="text-green-500">✓</span><span>' + law.title + '</span></div>';
+        }
+      }
+      
+      main.innerHTML = '<div class="min-h-screen px-6 py-12"><div class="max-w-2xl mx-auto">' +
+        '<button onclick="showView(\'laws\')" class="text-gray-400 hover:text-white mb-6">← Back</button>' +
+        '<h2 class="text-3xl font-bold gold-text mb-8">Your Progress</h2>' +
+        '<div class="grid grid-cols-2 gap-4 mb-8">' +
+        '<div class="card p-6 text-center"><div class="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-500 to-yellow-700 flex items-center justify-center mx-auto mb-3"><span class="text-2xl font-bold text-black">' + (currentUser.level || 1) + '</span></div><p class="text-gray-500">Level</p></div>' +
+        '<div class="card p-6 text-center"><p class="text-4xl font-bold gold-text">' + completed.length + '</p><p class="text-gray-500">Laws Mastered</p></div></div>' +
+        '<div class="card p-6"><h3 class="font-bold mb-4">Recent Achievements</h3>' + (achievements || '<p class="text-gray-500 text-center py-4">Start mastering laws</p>') + '</div>' +
+        '<button onclick="showView(\'laws\')" class="btn-primary w-full mt-6">Continue Learning</button></div></div>';
+    }
+
+    function renderProfile() {
+      if (!currentUser) { openLoginModal(); return; }
+      const main = document.getElementById('main-content');
+      main.innerHTML = '<div class="min-h-screen px-6 py-12"><div class="max-w-md mx-auto">' +
+        '<button onclick="showView(\'laws\')" class="text-gray-400 hover:text-white mb-6">← Back</button>' +
+        '<div class="card p-8 text-center mb-6">' +
+        '<div class="w-20 h-20 rounded-full bg-gradient-to-br from-yellow-500 to-yellow-700 flex items-center justify-center mx-auto mb-4"><span class="text-3xl font-bold text-black">' + currentUser.name[0].toUpperCase() + '</span></div>' +
+        '<h3 class="text-xl font-bold">' + currentUser.name + '</h3><p class="text-gray-500">' + currentUser.email + '</p><p class="text-yellow-500 mt-1">' + (currentUser.tier ? TIERS[currentUser.tier].name : 'Guest') + '</p></div>' +
+        '<div class="card p-6 mb-6"><div class="flex justify-between items-center"><div><p class="text-gray-500">Plan</p><p class="text-yellow-500">' + (currentUser.tier ? TIERS[currentUser.tier].name : 'Free') + '</p></div>' + (currentUser.tier ? '<button onclick="showView(\'subscribe\')" class="btn-secondary text-sm">Change</button>' : '<button onclick="showView(\'subscribe\')" class="btn-primary text-sm">Upgrade</button>') + '</div></div>' +
+        '<button onclick="logout()" class="btn-danger w-full">Logout</button></div></div>';
+    }
+
+    function renderSubscribe() {
+      const main = document.getElementById('main-content');
+      main.innerHTML = '<div class="min-h-screen px-6 py-12"><div class="max-w-4xl mx-auto">' +
+        '<button onclick="showView(\'landing\')" class="text-gray-400 hover:text-white mb-6">← Back</button>' +
+        '<h2 class="text-3xl font-bold gold-text text-center mb-8">Choose Your Path</h2>' +
+        '<div class="grid grid-cols-1 md:grid-cols-3 gap-4">' +
+        '<div class="card p-6 text-center"><h3 class="font-bold text-xl mb-2">Initiate</h3><p class="text-3xl font-bold gold-text mb-2">$29</p><p class="text-gray-500 text-sm mb-4">12 Laws</p><button onclick="selectTier(\'initiate\')" class="btn-primary w-full">Select</button></div>' +
+        '<div class="card p-6 text-center border-yellow-500"><span class="text-xs text-yellow-500 uppercase">Popular</span><h3 class="font-bold text-xl mb-2">Adept</h3><p class="text-3xl font-bold gold-text mb-2">$79</p><p class="text-gray-500 text-sm mb-4">48 Laws</p><button onclick="selectTier(\'adept\')" class="btn-primary w-full">Select</button></div>' +
+        '<div class="card p-6 text-center"><h3 class="font-bold text-xl mb-2">Sovereign</h3><p class="text-3xl font-bold gold-text mb-2">$199</p><p class="text-gray-500 text-sm mb-4">48 + Coaching</p><button onclick="selectTier(\'sovereign\')" class="btn-primary w-full">Select</button></div></div>' +
+        '<p class="text-center text-gray-500 mt-8">Bitcoin • Ethereum • Cash App • Venmo</p></div></div>';
+    }
+
+    function renderLocked() {
+      document.getElementById('main-content').innerHTML = '<div class="min-h-screen flex flex-col items-center justify-center px-6 py-20 text-center">' +
+        '<div class="seal mb-6"><span class="text-2xl">🔒</span></div>' +
+        '<h2 class="text-2xl font-bold mb-4">Content Locked</h2>' +
+        '<p class="text-gray-500 mb-6">Upgrade to access more laws</p>' +
+        '<button onclick="showView(\'subscribe\')" class="btn-primary">Upgrade Now</button></div>';
+    }
+
+    function renderAdmin() {
+      if (!currentUser || !currentUser.isAdmin) { showView('landing'); return; }
+      const main = document.getElementById('main-content');
+      const revenue = appState.payments.reduce((s, p) => s + p.amount, 0);
+      
+      let usersList = '';
+      for (const u of appState.users) {
+        usersList += '<tr class="border-b border-gray-800"><td class="py-2">' + u.name + '</td><td class="py-2 text-gray-400">' + u.email + '</td><td class="py-2">' + (u.tier || 'guest') + '</td><td class="py-2"><button onclick="impersonate(\'' + u.id + '\')" class="text-yellow-500 text-sm">Use</button></td></tr>';
+      }
+      
+      main.innerHTML = '<div class="min-h-screen px-6 py-12"><div class="max-w-6xl mx-auto">' +
+        '<div class="flex items-center justify-between mb-8"><h2 class="text-3xl font-bold text-red-500">Admin Dashboard</h2><span class="text-gray-500">Master Access</span></div>' +
+        '<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">' +
+        '<div class="card p-4"><p class="text-gray-500 text-xs">Users</p><p class="text-2xl font-bold">' + appState.users.length + '</p></div>' +
+        '<div class="card p-4"><p class="text-gray-500 text-xs">Views</p><p class="text-2xl font-bold">' + appState.metrics.pageViews + '</p></div>' +
+        '<div class="card p-4"><p class="text-gray-500 text-xs">Payments</p><p class="text-2xl font-bold">' + appState.payments.length + '</p></div>' +
+        '<div class="card p-4"><p class="text-gray-500 text-xs">Revenue</p><p class="text-2xl font-bold text-green-500">$' + revenue + '</p></div></div>' +
+        '<div class="card p-6 mb-6"><h3 class="font-bold mb-4">Users</h3><table class="w-full text-sm"><thead><tr class="text-gray-500"><th class="text-left">Name</th><th class="text-left">Email</th><th class="text-left">Tier</th><th class="text-left">Action</th></tr></thead><tbody>' + (usersList || '<tr><td colspan="4" class="text-center text-gray-500 py-4">No users yet</td></tr>') + '</tbody></table></div>' +
+        '<div class="flex gap-4"><button onclick="showView(\'laws\')" class="btn-primary">Browse All Laws</button><button onclick="clearData()" class="btn-danger">Clear All Data</button></div></div></div>';
+    }
+
+    function impersonate(userId) {
+      const u = appState.users.find(x => x.id === userId);
+      if (u) { currentUser = u; saveState(); showView('laws'); }
+    }
+
+    function clearData() {
+      if (confirm('Delete ALL data?')) {
+        appState = { currentUser: null, users: [], payments: [], metrics: { pageViews: 0, signups: 0, payments: 0, revenue: 0 } };
+        currentUser = null;
+        saveState();
+        renderAdmin();
+      }
+    }
+
+    // AUTH
+    function openLoginModal() { document.getElementById('loginModal').classList.add('active'); if(window.lucide)lucide.createIcons(); }
+    function showRegister() { closeModal('loginModal'); document.getElementById('registerModal').classList.add('active'); if(window.lucide)lucide.createIcons(); }
+    function showLogin() { closeModal('registerModal'); document.getElementById('loginModal').classList.add('active'); if(window.lucide)lucide.createIcons(); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      
+      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+        currentUser = { id: 'admin', name: 'Admin', email: email, isAdmin: true, tier: 'sovereign', level: 99, xp: 9999, completed: [], joinedAt: new Date().toISOString() };
+        saveState();
+        closeModal('loginModal');
+        showView('admin');
+        return;
+      }
+      
+      const u = appState.users.find(x => x.email === email && x.password === password);
+      if (u) {
+        currentUser = u;
+        saveState();
+        closeModal('loginModal');
+        showView('laws');
+      } else {
+        alert('Invalid credentials');
+      }
+    }
+
+    function handleRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('reg-name').value;
+      const email = document.getElementById('reg-email').value;
+      const password = document.getElementById('reg-password').value;
+      
+      if (appState.users.find(x => x.email === email)) { alert('Email exists'); return; }
+      
+      const newUser = { id: Date.now().toString(), name, email, password, isAdmin: false, tier: null, level: 1, xp: 0, completed: [], joinedAt: new Date().toISOString() };
+      appState.users.push(newUser);
+      appState.metrics.signups++;
+      currentUser = newUser;
+      saveState();
+      closeModal('registerModal');
+      showView('subscribe');
+    }
+
+    function logout() { currentUser = null; saveState(); showView('landing'); }
+
+    // PAYMENTS
+    function selectTier(tierKey) {
+      if (!currentUser) { openLoginModal(); return; }
+      const modal = document.getElementById('paymentModal');
+      const content = document.getElementById('payment-content');
+      content.innerHTML = '<div class="text-center mb-6"><h4 class="text-xl font-bold">' + TIERS[tierKey].name + '</h4><p class="text-3xl font-bold gold-text">$' + TIERS[tierKey].price + '</p></div>' +
+        '<div class="space-y-3"><button onclick="pay(\'' + tierKey + '\', \'btc\')" class="w-full card p-4 flex items-center gap-3 hover:bg-yellow-500/10"><span class="text-2xl">₿</span><span>Bitcoin (10% off)</span></button>' +
+        '<button onclick="pay(\'' + tierKey + '\', \'eth\')" class="w-full card p-4 flex items-center gap-3 hover:bg-yellow-500/10"><span class="text-2xl">◈</span><span>Ethereum (10% off)</span></button>' +
+        '<button onclick="pay(\'' + tierKey + '\', \'cashapp\')" class="w-full card p-4 flex items-center gap-3 hover:bg-yellow-500/10"><span class="text-2xl">$</span><span>Cash App ($48Laws)</span></button>' +
+        '<button onclick="pay(\'' + tierKey + '\', \'venmo\')" class="w-full card p-4 flex items-center gap-3 hover:bg-yellow-500/10"><span class="text-2xl">V</span><span>Venmo (@48Laws)</span></button></div>';
+      modal.classList.add('active');
+    }
+
+    function pay(tierKey, method) {
+      const content = document.getElementById('payment-content');
+      const amount = Math.round(TIERS[tierKey].price * (method === 'btc' || method === 'eth' ? 0.9 : 1));
+      
+      if (method === 'btc') {
+        content.innerHTML = '<div class="text-center"><h4 class="text-xl font-bold mb-4">Bitcoin Payment</h4><p class="text-gray-400 mb-4">Send $' + amount + ' in BTC</p><div class="bg-white p-4 rounded-lg inline-block mb-4"><div id="btcqr"></div></div><p class="text-xs text-gray-500 mb-4 break-all">' + BTC_ADDRESS + '</p><button onclick="confirmPay(\'' + tierKey + '\', ' + amount + ')" class="btn-primary w-full">I Sent Payment</button></div>';
+        setTimeout(() => new QRCode(document.getElementById('btcqr'), { text: 'bitcoin:' + BTC_ADDRESS, width: 150, height: 150 }), 100);
+      } else {
+        const addr = method === 'eth' ? '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb' : method === 'cashapp' ? '$48Laws' : '@48Laws';
+        content.innerHTML = '<div class="text-center"><h4 class="text-xl font-bold mb-4">' + method.toUpperCase() + ' Payment</h4><p class="text-gray-400 mb-4">Send $' + amount + ' to:</p><p class="text-2xl font-bold gold-text mb-6">' + addr + '</p><button onclick="confirmPay(\'' + tierKey + '\', ' + amount + ')" class="btn-primary w-full">I Sent Payment</button></div>';
+      }
+    }
+
+    function confirmPay(tierKey, amount) {
+      currentUser.tier = tierKey;
+      currentUser.xp = (currentUser.xp || 0) + 50;
+      appState.payments.push({ id: Date.now().toString(), userId: currentUser.id, userName: currentUser.name, tier: tierKey, amount: amount, method: 'btc', date: new Date().toISOString() });
+      appState.metrics.payments++;
+      appState.metrics.revenue += amount;
+      saveState();
+      closeModal('paymentModal');
+      showView('laws');
+    }
+
+    // INIT
+    document.addEventListener('DOMContentLoaded', () => {
+      updateNav();
+      showView('landing');
+    });
+  </script>
+</body>
+</html>
